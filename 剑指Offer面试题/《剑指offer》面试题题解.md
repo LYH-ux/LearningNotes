@@ -1049,4 +1049,409 @@ minStack.min();   --> 返回 -2.
   
   ```
 
+
+### 面试题31 栈的压入、弹出序列
+
+输入两个整数序列，第一个序列表示栈的压入顺序，请判断第二个序列是否为该栈的弹出顺序。假设压入栈的所有数字均不相等。例如，序列 {1,2,3,4,5} 是某栈的压栈序列，序列 {4,5,3,2,1} 是该压栈序列对应的一个弹出序列，但 {4,3,5,1,2} 就不可能是该压栈序列的弹出序列。
+
+示例 1：
+
+输入：pushed = [1,2,3,4,5], popped = [4,5,3,2,1]
+输出：true
+解释：我们可以按以下顺序执行：
+push(1), push(2), push(3), push(4), pop() -> 4,
+push(5), pop() -> 5, pop() -> 3, pop() -> 2, pop() -> 1
+示例 2：
+
+输入：pushed = [1,2,3,4,5], popped = [4,3,5,1,2]
+输出：false
+解释：1 不能在 2 之前弹出。
+
+
+
+- 思路
+
+  - 利用一个辅助栈，压入序列中的一个数字。 比较栈的top是否等于当前的弹出序列。 如果等则弹出，不等则继续压入
+  - 结束条件是  压入序列到达末尾。 此时要判断弹出序列是否到末尾及栈是否弹空。如果没有，则出栈结束后判断i == j ? 
+  - 贪心算法：每次循环中都弹出尽可能多的符合条件的值，而不是事后判断。
+
+- 注意点
+
+  - stl 库中的 stack ，当stack 为空是， 调用top（）会出现访问内存错误。所以要注意边界。
+
+- 题解
+
+  ```
+  bool validateStackSequences(vector<int>& pushed, vector<int>& popped) {
+          int pushLength = pushed.size();
+          int popLength = popped.size();
+          if( pushLength == 0 && popLength == 0)
+          {
+              return true;
+          }
+          if( pushLength != popLength)
+          {
+              return false;
+          }
+  
+          if( pushLength == 1 && popLength == 1)
+          {
+              if(pushed[0] == popped[0])
+              {
+                  return true;
+              }
+              else
+              {
+                  return false;
+              }
+          }
+  
+          stack<int>  auxiliaryStack;
+          int i=0,j=0;
+      
+          while(i< pushLength)
+          {
+              if(auxiliaryStack.empty())
+              {
+                   auxiliaryStack.push( pushed[i++] );
+              }
+              if( auxiliaryStack.top() != popped[j])
+              {
+                  auxiliaryStack.push( pushed[i] );
+                  i++;
+              }
+              else
+              {
+                  auxiliaryStack.pop();
+                  j++;
+              }
+          }
+          while(!auxiliaryStack.empty())
+          {
+              if(auxiliaryStack.top() == popped[j])
+              {
+                  auxiliaryStack.pop();
+                  j++;
+              }
+              else
+              {
+                  break;
+              }
+          }
+          return i==j;
+      }
+  ```
+
+   
+
+  逻辑判断结构还可以结合跟简化 ，有时候for 比 while合适。
+
+  ```
+   bool validateStackSequences(vector<int>& pushed, vector<int>& popped) {
+          int pushLength = pushed.size();
+          int popLength = popped.size();
+          if( pushLength == 0 && popLength == 0)
+          {
+              return true;
+          }
+          if( pushLength != popLength)
+          {
+              return false;
+          }
+          stack<int>  auxiliaryStack;
+          int j=0;
+          for(int i=0; i<pushLength; i++)
+          {
+              auxiliaryStack.push( pushed[i] );
+              while( !auxiliaryStack.empty() && j< popLength && auxiliaryStack.top() == popped[j])
+              {
+                  auxiliaryStack.pop();
+                  j++;
+              }
+          }
+          return auxiliaryStack.empty();
+      }
+  
+  ```
+
+  
+
+### 面试题32 从上到下打印二叉树
+
+从上到下打印出二叉树的每个节点，同一层的节点按照从左到右的顺序打印。 
+
+例如:
+给定二叉树: [3,9,20,null,null,15,7],
+
+  3
+
+   / \
+  9  20
+    /  \
+   15   7
+返回：
+
+[3,9,20,15,7]
+
+- 思路
+
+  这可类比广度优先遍历，使用队列， 当访问到本层的结点时，出队，打印本结点，将它的左、右子结点入队。 
+
+  队列为空时，遍历结束。
+
+- 补充：可使用顺序表模拟队列。  使用两个索引，指向队头和队尾。  队尾也可用表size -1 来标记。 
+
+  队头==队尾时，队列为空，遍历结束
+
+- 题解
+
+  ```
+          vector<int> levelOrder(TreeNode* root) {
+          vector<int> printSequence;
+          if(root == NULL)
+          {
+              return printSequence;
+          }
+  
+          printSequence.push_back( root->val );
+          vector<TreeNode*> myQueue;
+          int i=0,j=0;
+          if(root->left)
+          {
+              myQueue.push_back(root->left);
+              j++;
+          }
+          if(root->right)
+          {
+              myQueue.push_back(root->right);
+              j++;
+          }
+          while( i < j )
+          {
+              printSequence.push_back( myQueue[i]->val);
+              if(myQueue[i]->left)
+              {
+                  myQueue.push_back (myQueue[i]->left) ; 
+                  j++;
+              }
+              if(myQueue[i]->right)
+              {
+                  myQueue.push_back( myQueue[i]->right );
+                  j++;
+              }
+              i++;
+          }
+          return printSequence;
+      }
+  ```
+
+  当然也可以将根入队，然后判断条件可进一步简化，省去在循环外判断根左右结点及入队。 
+
+  但实际上，根不为空也不需再入队了，只入队它左右结点即可。 所以还是分开合适 。
+
+### 面试题32   换行从上到下打印二叉树
+
+从上到下按层打印二叉树，同一层的节点按从左到右的顺序打印，每一层打印到一行。 
+
+例如:
+给定二叉树: [3,9,20,null,null,15,7],
+
+​    3
+
+   / \
+  9  20
+    /  \
+   15   7
+返回其层次遍历结果：
+
+[
+  [3],
+  [9,20],
+  [15,7]
+]
+
+- 思路
+
+  - 队列+每一层入队的计数值  
+  - 但是这里的实现返回值是 vector<vector<int>>  所以可以 vector<int>.size() 作为计数值。
+  - BFS   广度优先，队列
+  - DFS   深度优先，维护一个level 
+
+- 知识点
+
+  - queue       push()    pop()   front()
+  - deque    push_back()   front()   pop_front()
+
+- 题解
+
+  ```
+      vector<vector<int>> levelOrder(TreeNode* root) {
+          vector<vector<int>> result;
+          if( root == NULL )
+          {
+              return result;
+          }
+          vector<int> rowSequence;
+          rowSequence.push_back( root -> val );
+          result.push_back( rowSequence );
+          
+          int i=0;
+          queue<TreeNode *> nodeSequence;
+          nodeSequence.emplace(root);
+  
+          while( i < result.size() )
+          {
+              vector<int> tmpSequence;
+              for( int j=0; j<result[i].size(); j++)
+              {
+                  auto node = nodeSequence.front();
+                  nodeSequence.pop();
+  
+                  if(node->left)
+                  {
+                      tmpSequence.push_back(node->left->val);
+                      nodeSequence.emplace(node->left);
+                  }
+                  if(node->right)
+                  {
+                      tmpSequence.push_back(node->right->val);
+                      nodeSequence.emplace(node->right);
+                  }                
+              }
+              if(tmpSequence.size()>0)
+              {
+                  result.push_back(tmpSequence);
+              }
+              i++;
+          }
+          return result;
+      }
+  ```
+
+  ```
+  class Solution {
+  public:
+      vector<vector<int>> levelOrder(TreeNode* root) {
+          vector<vector<int>> res;
+          dfs(root,res,0);
+          return res;
+      }
+      void dfs(TreeNode* root,vector<vector<int>>& res,int level)
+      {
+          if(!root) return;
+          if(level>=res.size()) res.emplace_back(vector<int>());
+          res[level].emplace_back(root->val);
+          dfs(root->left,res,level+1);
+          dfs(root->right,res,level+1);
+      }
+  };
+  ```
+
+  
+
+### 面试题32  之字形打印二叉树
+
+请实现一个函数按照之字形顺序打印二叉树，即第一行按照从左到右的顺序打印，第二层按照从右到左的顺序打印，第三行再按照从左到右的顺序打印，其他行以此类推。
+
+例如:
+给定二叉树: [3,9,20,null,null,15,7],
+
+   3
+
+   / \
+  9  20
+    /  \
+   15   7
+返回其层次遍历结果：
+
+[
+  [3],
+  [20,9],
+  [15,7]
+]
+
+- 思路
+  - 模拟该过程可知，每一层的结点满足后进先出关系 ，可以在奇数层和偶数层各使用一个栈来交替打印，完成输出
+  - 可以用一个顺序容器vector来代替栈。记录下每层的结点数count， 从顺序表末尾顺序访问count 个结点即可完成对下一层的遍历。只要保证在奇数层， 先访问左结点，再访问右结点。 在偶数层，先访问右结点，再访问左结点即可。
+
+- 编程思考
+  - for 里面嵌套 if , 则每次都会判断if语句
+  - 先if后for , 可缩减判断次数 。  但是代码较冗余。 因为有两段相似的代码。
+
+- 题解
+
+  ```
+   vector<vector<int>> levelOrder(TreeNode* root) {
+          vector<vector<int>>  result;
+          if( root == NULL )
+          {
+              return result;
+          }
+          result.push_back(vector<int>());
+          result[0].push_back(root -> val);
+          
+          vector<TreeNode*> nodeSequence;
+          nodeSequence.push_back(root);
+          int level = 1;
+          int count = 1;
+          while(1)
+          {
+              vector<int> tmpPrint;
+              int j = nodeSequence.size()-1;
+              int length = 0;
+              if(level%2)
+              {
+                  for(;count;count--)
+                  {
+                      TreeNode * node = nodeSequence[j--];
+                      if(node->right)
+                      {
+                          nodeSequence.push_back(node->right);
+                          tmpPrint.push_back(node->right->val);
+                          length++;
+                      }
+                      if(node->left)
+                      {
+                          nodeSequence.push_back(node->left);
+                          tmpPrint.push_back(node->left->val);
+                          length++;
+                      }
+                  }
+              }
+              else
+              {
+                  for(;count;count--)
+                  {
+                      TreeNode * node = nodeSequence[j--];
+                      if(node->left)
+                      {
+                          nodeSequence.push_back(node->left);
+                          tmpPrint.push_back(node->left->val);
+                          length++;
+                      }
+                      if(node->right)
+                      {
+                          nodeSequence.push_back(node->right);
+                          tmpPrint.push_back(node->right->val);
+                          length++;
+                      }
+                  }
+              }
+  
+              if(tmpPrint.size())
+              {
+                  result.push_back(tmpPrint);
+              }
+              else
+              {
+                  break;
+              }
+              level++;
+              count = length;
+          }
+  
+          return result;
+      }
+  ```
+
   
